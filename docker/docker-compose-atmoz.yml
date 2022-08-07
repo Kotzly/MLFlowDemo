@@ -1,0 +1,61 @@
+version: '3.5'
+
+services:
+
+  postgres:
+    container_name: mlflow_postgres
+    hostname: postgres
+    image: postgres:14.4
+    environment:
+#      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_USER: mlflow_user
+      POSTGRES_PASSWORD: postgrespass
+      POSTGRES_DB: mlflow_db
+      PGDATA: /data/postgres
+    volumes:
+       - ./postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - mlflow
+
+  mlflow:
+    container_name: mlflow_server
+    image: mlflow_example
+    hostname: mlflow_server
+    environment:
+      - POSTGRES_USER=mlflow_user
+      - POSTGRES_PASS=postgrespass
+      - POSTGRES_HOST=mlflow_postgres
+      - POSTGRES_DB=mlflow_db
+      - SFTP_USER=mlflow_user
+      - SFTP_HOST=sftp
+      - SFTP_PORT=22
+      - MLFLOW_FOLDER=/mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./.ssh_user:/root/.ssh
+    restart: always
+    networks:
+      - mlflow
+
+  sftp:
+      image: atmoz/sftp
+      container_name: mlflow_sftp
+      hostname: sftp
+      volumes:
+          - /home/paulo/atmoz_data/mlflow:/home/mlflow_user/mlflow
+          - ./.ssh_user/id_rsa.pub:/home/mlflow_user/.ssh/keys/id_rsa.pub
+          - ./.ssh_host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
+          - ./.ssh_host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
+      command: mlflow_user:sftppass:1001
+      networks:
+          - mlflow
+
+networks:
+  mlflow:
+    driver: bridge
+
+
