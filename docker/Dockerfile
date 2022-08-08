@@ -9,6 +9,9 @@ RUN pip install mlflow boto3 pymysql psycopg2-binary pysftp
 
 EXPOSE 5000
 
-COPY entrypoint.sh /entrypoint.sh
+RUN mkdir /mlflow
 
-CMD /entrypoint.sh
+COPY entrypoint_sftp.sh /entrypoint_sftp.sh
+COPY entrypoint_local_sftp.sh /entrypoint_local_sftp.sh
+COPY entrypoint_file_storage.sh /entrypoint_file_storage.sh
+

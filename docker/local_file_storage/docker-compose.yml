@@ -1,0 +1,48 @@
+version: '3.5'
+
+services:
+
+  postgres:
+    container_name: mlflow_postgres
+    hostname: postgres
+    image: postgres:14.4
+    environment:
+#      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_USER: mlflow_user
+      POSTGRES_PASSWORD: postgrespass
+      POSTGRES_DB: mlflow_db
+      PGDATA: /data/postgres
+    volumes:
+       - ./postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - mlflow
+
+  mlflow:
+    container_name: mlflow_server
+    image: mlflow
+    hostname: mlflow_server
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=mlflow_user
+      - POSTGRES_PASS=postgrespass
+      - POSTGRES_HOST=mlflow_postgres
+      - POSTGRES_DB=mlflow_db
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./.ssh_user:/root/.ssh
+      - /home/paulo/mlflow:/home/paulo/mlflow
+    restart: always
+    command: sh /entrypoint_file_storage.sh
+    networks:
+      - mlflow
+
+networks:
+  mlflow:
+    driver: bridge
+
+

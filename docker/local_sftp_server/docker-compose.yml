@@ -22,37 +22,25 @@ services:
 
   mlflow:
     container_name: mlflow_server
-    image: mlflow_example
+    image: mlflow
     hostname: mlflow_server
+    env_file:
+      - .env
     environment:
       - POSTGRES_USER=mlflow_user
       - POSTGRES_PASS=postgrespass
       - POSTGRES_HOST=mlflow_postgres
       - POSTGRES_DB=mlflow_db
-      - SFTP_USER=mlflow_user
-      - SFTP_HOST=sftp
-      - SFTP_PORT=22
-      - MLFLOW_FOLDER=/mlflow
     ports:
       - "5000:5000"
     volumes:
-      - ./.ssh_user:/root/.ssh
+      - ./.ssh:/root/.ssh
     restart: always
+    command: sh entrypoint_local_sftp.sh
+    depends_on:
+      - postgres
     networks:
       - mlflow
-
-  sftp:
-      image: atmoz/sftp
-      container_name: mlflow_sftp
-      hostname: sftp
-      volumes:
-          - /home/paulo/atmoz_data/mlflow:/home/mlflow_user/mlflow
-          - ./.ssh_user/id_rsa.pub:/home/mlflow_user/.ssh/keys/id_rsa.pub
-          - ./.ssh_host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
-          - ./.ssh_host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
-      command: mlflow_user:sftppass:1001
-      networks:
-          - mlflow
 
 networks:
   mlflow:
